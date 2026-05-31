@@ -1,18 +1,22 @@
 import { useState, useEffect } from "react";
 
 const COOKIES = [
-  { id: "lemon",     name: "Lemon",         emoji: "🍋", desc: "Bright, tangy & perfectly sweet"   },
-  { id: "chocolate", name: "Chocolate",      emoji: "🍫", desc: "Rich, fudgy & deeply chocolatey"  },
-  { id: "banana",    name: "Banana Foster",  emoji: "🍌", desc: "Caramelized banana & warm spice"  },
-  { id: "berry",     name: "Oatmeal Berry",  emoji: "🫐", desc: "Hearty oats & juicy berry center" },
+  { id: "lemon",     name: "Lemon",         emoji: "🍋", desc: "Bright, tangy, rich white coco & perfectly sweet"   },
+  { id: "chocolate", name: "Chocolate",      emoji: "🍫", desc: "buttery, fudgy & deeply chocolatey"  },
+  { id: "banana",    name: "Banana Foster",  emoji: "🍌", desc: "Caramelized banana, coconut with warm spice"  },
+  { id: "berry",     name: "Oatmeal Berry",  emoji: "🫐", desc: "Hearty oats, forsted with juicy berry center" },
 ];
 
 const DEFAULT_PICKUP_SLOTS = [
-  "Friday 12:00 PM – 1:00 PM",
-  "Friday 2:00 PM – 3:00 PM",
-  "Friday 5:00 PM – 6:00 PM",
-  "Saturday 11:00 AM – 12:00 PM",
-  "Saturday 2:00 PM – 3:00 PM",
+  "Tuesday 12:00 PM – 1:00 PM",
+  "Tuesday 2:00 PM – 3:00 PM",
+  "Tuesday 5:00 PM – 6:00 PM",
+  "Tuesday 7:00 PM - 8:00 PM",
+  "Wednesday 11:00 AM – 12:00 PM",
+  "Wednesday 2:00 PM – 3:00 PM",
+  "Wednesday 5:00 PM - 6:00 PM",
+  "Wednesday 7:00 PM - 8:00PM",
+  
 ];
 
 const OWNER_PHONE   = "(470) 276-5026";
