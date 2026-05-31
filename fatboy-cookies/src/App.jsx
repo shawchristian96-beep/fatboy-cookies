@@ -4,7 +4,7 @@ const COOKIES = [
   { id: "lemon",     name: "Lemon",         emoji: "🍋", desc: "Bright, tangy, rich white coco & perfectly sweet"   },
   { id: "chocolate", name: "Chocolate",      emoji: "🍫", desc: "buttery, fudgy & deeply chocolatey"  },
   { id: "banana",    name: "Banana Foster",  emoji: "🍌", desc: "Caramelized banana, coconut with warm spice"  },
-  { id: "berry",     name: "Oatmeal Berry",  emoji: "🫐", desc: "Hearty oats, forsted with juicy berry center" },
+  { id: "berry",     name: "Oatmeal Berry",  emoji: "🫐", desc: "Hearty oats, frosted with juicy berry center" },
 ];
 
 const DEFAULT_PICKUP_SLOTS = [
