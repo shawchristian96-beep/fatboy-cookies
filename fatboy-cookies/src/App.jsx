@@ -7,25 +7,15 @@ const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 // ── OneSignal App ID
 const ONESIGNAL_APP_ID = "70c46d73-b924-4926-ac83-f4e68de76d55";
 
-// ── Send push notification via OneSignal REST API
-const sendPush = async (title, message) => {
+// ── Send email notification via our serverless function
+const sendEmail = async (type, order) => {
   try {
-    await fetch("https://onesignal.com/api/v1/notifications", {
+    await fetch("/api/notify", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Basic ${ONESIGNAL_APP_ID}`,
-      },
-      body: JSON.stringify({
-        app_id: ONESIGNAL_APP_ID,
-        included_segments: ["All"],
-        headings: { en: title },
-        contents: { en: message },
-        priority: 10,
-        ttl: 300,
-      }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type, order }),
     });
-  } catch (e) { console.error("Push failed:", e); }
+  } catch (e) { console.error("Email notification failed:", e); }
 };
 
 // ── Sound engine using Web Audio API
@@ -187,7 +177,7 @@ export default function App() {
           const newest = data[0];
           playSound("order");
           showToast(`🍪 NEW ORDER from ${newest.name}!`, "order");
-          sendPush("🍪 New Fatboy Cookie Order!", `${newest.name} just ordered ${newest.qty} box${newest.qty > 1 ? "es" : ""} — ${newest.pickup}`);
+          sendEmail("new_order", newest);
         }
         // Check for new arrivals
         const newArrivals = data.filter(o => o.arrived && o.status !== "pickedup");
@@ -195,7 +185,7 @@ export default function App() {
           const arrived = newArrivals[0];
           playSound("arrival");
           showToast(`🚗 ${arrived.name} is HERE!`, "arrival");
-          sendPush("🚗 Customer Pulling Up!", `${arrived.name} just tapped "I'm Here" — order ${arrived.order_num}`);
+          sendEmail("arrival", arrived);
         }
         lastOrderCount.current = data.length;
         lastArrivalsCount.current = newArrivals.length;
@@ -255,23 +245,22 @@ export default function App() {
     setSubmitting(true);
     const num = "FBC" + Math.floor(1000 + Math.random() * 9000);
     try {
+      const newOrderData = {
+        order_num: num, name, phone, email, note, qty,
+        box_type: boxType, flavors: selected.join(","),
+        pickup: pickupSlot, status: "pending",
+      };
       await sb("orders", {
         method: "POST",
         prefer: "return=minimal",
-        body: JSON.stringify({
-          order_num: num,
-          name, phone, email, note, qty,
-          box_type: boxType,
-          flavors: selected.join(","),
-          pickup: pickupSlot,
-          status: "pending",
-        }),
+        body: JSON.stringify(newOrderData),
       });
       // Update box count
       const newBoxes = Math.max(0, boxesLeft - qty);
       setBoxesLeft(newBoxes); setAdminBoxes(newBoxes);
       lsSet("fatboy-boxes", String(newBoxes));
       setOrderNum(num);
+      sendEmail("new_order", { ...newOrderData, order_num: num });
       setStep(5);
     } catch (e) {
       alert("Order failed. Please try again.");
@@ -309,7 +298,7 @@ export default function App() {
         body: JSON.stringify({ arrived: true }),
       });
       const o = orders.find(x => x.order_num === oNum);
-      if (o) sendPush("🚗 Customer Pulling Up!", `${o.name} just tapped "I'm Here" — order ${oNum}`);
+      if (o) sendEmail("arrival", o);
     } catch (e) { console.error(e); }
   };
 
