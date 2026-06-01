@@ -604,7 +604,6 @@ export default function App() {
   return (
     <div style={{minHeight:"100vh",background:"#111",fontFamily:"'Nunito',sans-serif",color:"#f5f0e8",overflowX:"hidden"}}>
       <style>{css}</style>
-      <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
       {toast && <div className={toast.type==="arrival"?"notif-arrival":"notif-order"}>{toast.msg}</div>}
       <TopBar/>
       <div style={{maxWidth:500,margin:"0 auto",padding:"28px 18px 60px"}}>
@@ -861,4 +860,3 @@ export default function App() {
     </div>
   );
 }
-.
