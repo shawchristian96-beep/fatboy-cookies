@@ -8,17 +8,21 @@ const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 const ONESIGNAL_APP_ID = "70c46d73-b924-4926-ac83-f4e68de76d55";
 
 // ── Send push notification via OneSignal REST API
-const sendPush = async (title, message, icon = "🍪") => {
+const sendPush = async (title, message) => {
   try {
     await fetch("https://onesignal.com/api/v1/notifications", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Basic ${ONESIGNAL_APP_ID}`,
+      },
       body: JSON.stringify({
         app_id: ONESIGNAL_APP_ID,
         included_segments: ["All"],
         headings: { en: title },
         contents: { en: message },
-        chrome_web_icon: "https://fatboy-cookies.vercel.app/cookie.png",
+        priority: 10,
+        ttl: 300,
       }),
     });
   } catch (e) { console.error("Push failed:", e); }
@@ -142,16 +146,34 @@ export default function App() {
 
   // ── Init OneSignal on mount
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    const initOneSignal = () => {
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       window.OneSignalDeferred.push(async (OneSignal) => {
-        await OneSignal.init({
-          appId: ONESIGNAL_APP_ID,
-          safari_web_id: "web.onesignal.auto.fatboy-cookies",
-          notifyButton: { enable: false },
-          allowLocalhostAsSecureOrigin: true,
-        });
+        try {
+          await OneSignal.init({
+            appId: ONESIGNAL_APP_ID,
+            allowLocalhostAsSecureOrigin: true,
+            notifyButton: { enable: false },
+            serviceWorkerPath: "/OneSignalSDKWorker.js",
+          });
+          // Request permission immediately
+          const permission = await OneSignal.Notifications.permission;
+          if (!permission) {
+            await OneSignal.Notifications.requestPermission();
+          }
+        } catch (e) { console.error("OneSignal init error:", e); }
       });
+    };
+    // Load OneSignal script dynamically
+    if (!document.getElementById("onesignal-sdk")) {
+      const script = document.createElement("script");
+      script.id = "onesignal-sdk";
+      script.src = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js";
+      script.defer = true;
+      script.onload = initOneSignal;
+      document.head.appendChild(script);
+    } else {
+      initOneSignal();
     }
   }, []);
 
@@ -839,3 +861,4 @@ export default function App() {
     </div>
   );
 }
+.
