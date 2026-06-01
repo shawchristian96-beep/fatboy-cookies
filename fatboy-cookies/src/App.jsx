@@ -1,8 +1,66 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 // ── Supabase config
 const SUPABASE_URL = "https://ljopfmglxsrpicvjnzuf.supabase.co";
 const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxqb3BmbWdseHNycGljdmpuenVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNjQwNzUsImV4cCI6MjA5NTg0MDA3NX0.ERV3QMbCRsjADSZxUy8PzWkJ9vWhXNTnffHwjH9u_uE";
+
+// ── OneSignal App ID
+const ONESIGNAL_APP_ID = "70c46d73-b924-4926-ac83-f4e68de76d55";
+
+// ── Send push notification via OneSignal REST API
+const sendPush = async (title, message, icon = "🍪") => {
+  try {
+    await fetch("https://onesignal.com/api/v1/notifications", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        app_id: ONESIGNAL_APP_ID,
+        included_segments: ["All"],
+        headings: { en: title },
+        contents: { en: message },
+        chrome_web_icon: "https://fatboy-cookies.vercel.app/cookie.png",
+      }),
+    });
+  } catch (e) { console.error("Push failed:", e); }
+};
+
+// ── Sound engine using Web Audio API
+const playSound = (type) => {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+    if (type === "order") {
+      // 🔔 Cash register ding — two ascending bright tones
+      const times = [0, 0.18, 0.36];
+      const freqs = [880, 1100, 1320];
+      times.forEach((t, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freqs[i], ctx.currentTime + t);
+        gain.gain.setValueAtTime(0.5, ctx.currentTime + t);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.3);
+        osc.start(ctx.currentTime + t);
+        osc.stop(ctx.currentTime + t + 0.3);
+      });
+    } else if (type === "arrival") {
+      // 🚗 Doorbell — classic ding dong
+      const notes = [{ f: 659, t: 0 }, { f: 523, t: 0.35 }];
+      notes.forEach(({ f, t }) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(f, ctx.currentTime + t);
+        gain.gain.setValueAtTime(0.6, ctx.currentTime + t);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.6);
+        osc.start(ctx.currentTime + t);
+        osc.stop(ctx.currentTime + t + 0.6);
+      });
+    }
+  } catch (e) { console.error("Sound failed:", e); }
+};
 
 const sb = async (path, opts = {}) => {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
@@ -57,6 +115,10 @@ export default function App() {
   const [customers, setCustomers]     = useState([]);
   const [arrivals, setArrivals]       = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
+  const [toast, setToast]               = useState(null); // {msg, type}
+  const lastOrderCount                  = useRef(0);
+  const lastArrivalsCount               = useRef(0);
+  const pollInterval                    = useRef(null);
   const [step, setStep]               = useState(1);
   const [selected, setSelected]       = useState([]);
   const [boxType, setBoxType]         = useState("");
@@ -71,6 +133,63 @@ export default function App() {
   const [lookupNum, setLookupNum]     = useState("");
   const [lookupResult, setLookupResult] = useState(null);
   const [iHereSuccess, setIHereSuccess] = useState(false);
+
+  // ── Toast helper
+  const showToast = (msg, type = "order") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  // ── Init OneSignal on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      window.OneSignalDeferred.push(async (OneSignal) => {
+        await OneSignal.init({
+          appId: ONESIGNAL_APP_ID,
+          safari_web_id: "web.onesignal.auto.fatboy-cookies",
+          notifyButton: { enable: false },
+          allowLocalhostAsSecureOrigin: true,
+        });
+      });
+    }
+  }, []);
+
+  // ── Auto-poll every 30s for new orders & arrivals
+  useEffect(() => {
+    const poll = async () => {
+      try {
+        const data = await sb("orders?select=*&order=created_at.desc");
+        // Check for new orders
+        if (lastOrderCount.current > 0 && data.length > lastOrderCount.current) {
+          const newest = data[0];
+          playSound("order");
+          showToast(`🍪 NEW ORDER from ${newest.name}!`, "order");
+          sendPush("🍪 New Fatboy Cookie Order!", `${newest.name} just ordered ${newest.qty} box${newest.qty > 1 ? "es" : ""} — ${newest.pickup}`);
+        }
+        // Check for new arrivals
+        const newArrivals = data.filter(o => o.arrived && o.status !== "pickedup");
+        if (lastArrivalsCount.current > 0 && newArrivals.length > lastArrivalsCount.current) {
+          const arrived = newArrivals[0];
+          playSound("arrival");
+          showToast(`🚗 ${arrived.name} is HERE!`, "arrival");
+          sendPush("🚗 Customer Pulling Up!", `${arrived.name} just tapped "I'm Here" — order ${arrived.order_num}`);
+        }
+        lastOrderCount.current = data.length;
+        lastArrivalsCount.current = newArrivals.length;
+        setOrders(data);
+        const custMap = {};
+        data.forEach(o => {
+          if (!custMap[o.phone]) custMap[o.phone] = { name: o.name, phone: o.phone, email: o.email, firstOrder: o.created_at, totalOrders: 0 };
+          custMap[o.phone].totalOrders++;
+        });
+        setCustomers(Object.values(custMap).sort((a, b) => b.totalOrders - a.totalOrders));
+      } catch (e) { console.error("Poll error:", e); }
+    };
+    // Start polling
+    pollInterval.current = setInterval(poll, 30000);
+    return () => clearInterval(pollInterval.current);
+  }, []);
 
   // Load inventory from localStorage (admin-only data)
   useEffect(() => {
@@ -161,11 +280,14 @@ export default function App() {
     setArrivals(newArrivals);
     setIHereSuccess(true);
     lsSet("fatboy-arrivals", JSON.stringify(newArrivals));
+    playSound("arrival");
     try {
       await sb(`orders?order_num=eq.${oNum}`, {
         method: "PATCH", prefer: "return=minimal",
         body: JSON.stringify({ arrived: true }),
       });
+      const o = orders.find(x => x.order_num === oNum);
+      if (o) sendPush("🚗 Customer Pulling Up!", `${o.name} just tapped "I'm Here" — order ${oNum}`);
     } catch (e) { console.error(e); }
   };
 
@@ -230,6 +352,9 @@ export default function App() {
     .pin-btn:hover{border-color:#f4a261;background:#2a2a2a;}
     .pin-btn:active{transform:scale(.95);}
     .saved-toast{background:#4caf6e;color:#fff;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;padding:8px 20px;border-radius:20px;position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:999;}
+    .notif-order{position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:9999;background:#4caf6e;color:#fff;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;padding:14px 28px;border-radius:14px;box-shadow:0 8px 32px rgba(76,175,110,0.5);white-space:nowrap;animation:slideDown .4s ease;}
+    .notif-arrival{position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:9999;background:#f4a261;color:#1c1c1c;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;padding:14px 28px;border-radius:14px;box-shadow:0 8px 32px rgba(244,162,97,0.5);white-space:nowrap;animation:slideDown .4s ease;}
+    @keyframes slideDown{from{opacity:0;transform:translateX(-50%) translateY(-20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
   `;
 
   const TopBar = () => (
@@ -457,6 +582,8 @@ export default function App() {
   return (
     <div style={{minHeight:"100vh",background:"#111",fontFamily:"'Nunito',sans-serif",color:"#f5f0e8",overflowX:"hidden"}}>
       <style>{css}</style>
+      <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+      {toast && <div className={toast.type==="arrival"?"notif-arrival":"notif-order"}>{toast.msg}</div>}
       <TopBar/>
       <div style={{maxWidth:500,margin:"0 auto",padding:"28px 18px 60px"}}>
 
