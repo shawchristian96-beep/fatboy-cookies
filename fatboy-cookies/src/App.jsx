@@ -97,18 +97,22 @@ const sb = async (path, opts = {}) => {
 };
 
 const COOKIES = [
-  { id: "lemon",     name: "Lemon",        emoji: "🍋", desc: "Bright, tangy & white chocolate drizzle"  },
+  { id: "lemon",     name: "Lemon",        emoji: "🍋", desc: "Bright, tangy, sweet white chocolateness "  },
   { id: "chocolate", name: "Chocolate",     emoji: "🍫", desc: "Rich, fudgy & deeply chocolatey"          },
   { id: "banana",    name: "Banana Foster", emoji: "🍌", desc: "Caramelized banana, coconut & warm spice" },
-  { id: "berry",     name: "Oatmeal Berry", emoji: "🫐", desc: "Hearty oats & juicy berry center"         },
+  { id: "berry",     name: "Oatmeal Berry", emoji: "🫐", desc: "Hearty oats, juicy berry center with a frosted top"         },
 ];
 
 const PICKUP_SLOTS = [
-  "Friday 12:00 PM – 1:00 PM",
-  "Friday 2:00 PM – 3:00 PM",
-  "Friday 5:00 PM – 6:00 PM",
-  "Saturday 11:00 AM – 12:00 PM",
-  "Saturday 2:00 PM – 3:00 PM",
+  "Tuesday 12:00 PM – 1:00 PM",
+  "Tuesday 2:00 PM – 3:00 PM",
+  "Tuesday 5:00 PM – 6:00 PM",
+  "Tuesday 7:00 PM - 8:00 PM",
+  "Wednesday 11:00 AM – 12:00 PM",
+  "Wednesday 2:00 PM – 3:00 PM",
+  "Wednesday 4:00 PM - 5:00 PM",
+  "Wednesday 7:00 PM - 8:00 PM",
+  "Thursday 12:00 PM - 2:00 PM",
 ];
 
 const OWNER_PHONE = "(470) 276-5026";
