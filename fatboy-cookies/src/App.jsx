@@ -385,11 +385,6 @@ export default function App() {
         <button onClick={()=>view==="admin"?setView("store"):setShowPin(true)}
           style={{background:"#2a2a2a",border:"2px solid #f4a261",color:"#f4a261",fontSize:13,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:1,borderRadius:8,padding:"6px 12px",cursor:"pointer",position:"relative"}}>
           ⚙️ ADMIN
-          {arrivals.filter(a=>orders.find(o=>o.order_num===a&&o.status!=="pickedup")).length>0&&(
-            <span style={{position:"absolute",top:-6,right:-6,background:"#e63946",color:"#fff",borderRadius:"50%",width:18,height:18,fontSize:11,display:"flex",alignItems:"center",justifyContent:"center",border:"2px solid #111"}}>
-              {arrivals.filter(a=>orders.find(o=>o.order_num===a&&o.status!=="pickedup")).length}
-            </span>
-          )}
         </button>
       </div>
     </div>
