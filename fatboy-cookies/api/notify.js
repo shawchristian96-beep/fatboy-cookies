@@ -3,7 +3,7 @@ export default async function handler(req, res) {
 
   const { type, order } = req.body;
 
-  const RESEND_KEY = "re_R213LqM4_JkbAsFdB4ESEG1h4VWnipaqi";
+  const RESEND_KEY = "re_7t6HnyG3_DuwtSTxF26TrF22LFwHFV4z6";
   const TO_EMAIL   = "1Fatboycookies@gmail.com";
   const FROM_EMAIL = "onboarding@resend.dev";
 
