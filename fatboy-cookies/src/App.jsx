@@ -13,7 +13,12 @@ const EJS_TEMPLATE = "template_n1orm1o";
 const EJS_PUBKEY   = "LsFbHIcEIVjeb2rmvnqf1";
 
 // ── Send email via EmailJS (sends from your own Gmail)
-const sendEmail = async (type, order) => {
+window.emailjs.send(EJS_SERVICE, EJS_TEMPLATE, {
+  to_email: "1fatboycookies@gmail.com",
+  subject,
+  message,
+  from_name: "Fatboy Cookies Orders",
+});
   try {
     const isArrival = type === "arrival";
     const subject = isArrival
