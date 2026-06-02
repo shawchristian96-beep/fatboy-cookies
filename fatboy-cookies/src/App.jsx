@@ -13,12 +13,7 @@ const EJS_TEMPLATE = "template_n1orm1o";
 const EJS_PUBKEY   = "LsFbHIcEIVjeb2rmvnqf1";
 
 // ── Send email via EmailJS (sends from your own Gmail)
-window.emailjs.send(EJS_SERVICE, EJS_TEMPLATE, {
-  to_email: "1fatboycookies@gmail.com",
-  subject,
-  message,
-  from_name: "Fatboy Cookies Orders",
-});
+const sendEmail = async (type, order) => {
   try {
     const isArrival = type === "arrival";
     const subject = isArrival
@@ -28,8 +23,22 @@ window.emailjs.send(EJS_SERVICE, EJS_TEMPLATE, {
     const message = isArrival
       ? `🚗 ${order.name} just tapped "I'm Here"!\n\nOrder: ${order.order_num}\nPhone: ${order.phone}\nPickup: ${order.pickup}\nFlavors: ${order.flavors}\n\n🍪 Bring their box to the door now!`
       : `🍪 NEW ORDER RECEIVED!\n\nOrder #: ${order.order_num}\nName: ${order.name}\nPhone: ${order.phone}\n${order.email ? `Email: ${order.email}\n` : ""}Box Type: ${order.box_type}\nFlavors: ${order.flavors}\nQuantity: ${order.qty} box${order.qty > 1 ? "es" : ""} (${order.qty * 4} cookies)\nPickup: ${order.pickup}\n${order.note ? `Note: "${order.note}"\n` : ""}\nGo to your admin panel to mark ready when baked!`;
-await window.emailjs.send(EJS_SERVICE, EJS_TEMPLATE, { to_email: "1fatboycookies@gmail.com", subject, message, from_name: "Fatboy Cookies Orders" }, EJS_PUBKEY);
-    
+
+    await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        service_id: EJS_SERVICE,
+        template_id: EJS_TEMPLATE,
+        user_id: EJS_PUBKEY,
+        template_params: {
+          to_email: "1fatboycookies@gmail.com",
+          subject,
+          message,
+          from_name: "Fatboy Cookies Orders",
+        },
+      }),
+    });
   } catch (e) { console.error("Email notification failed:", e); }
 };
 
@@ -88,22 +97,18 @@ const sb = async (path, opts = {}) => {
 };
 
 const COOKIES = [
-  { id: "lemon",     name: "Lemon",        emoji: "🍋", desc: "Bright, tangy, sweet white chocolateness "  },
+  { id: "lemon",     name: "Lemon",        emoji: "🍋", desc: "Bright, tangy & white chocolate drizzle"  },
   { id: "chocolate", name: "Chocolate",     emoji: "🍫", desc: "Rich, fudgy & deeply chocolatey"          },
   { id: "banana",    name: "Banana Foster", emoji: "🍌", desc: "Caramelized banana, coconut & warm spice" },
-  { id: "berry",     name: "Oatmeal Berry", emoji: "🫐", desc: "Hearty oats, juicy berry center with a frosted top"         },
+  { id: "berry",     name: "Oatmeal Berry", emoji: "🫐", desc: "Hearty oats & juicy berry center"         },
 ];
 
 const PICKUP_SLOTS = [
-  "Tuesday 12:00 PM – 1:00 PM",
-  "Tuesday 2:00 PM – 3:00 PM",
-  "Tuesday 5:00 PM – 6:00 PM",
-  "Tuesday 7:00 PM - 8:00 PM",
-  "Wednesday 11:00 AM – 12:00 PM",
-  "Wednesday 2:00 PM – 3:00 PM",
-  "Wednesday 4:00 PM - 5:00 PM",
-  "Wednesday 7:00 PM - 8:00 PM",
-  "Thursday 12:00 PM - 2:00 PM",
+  "Friday 12:00 PM – 1:00 PM",
+  "Friday 2:00 PM – 3:00 PM",
+  "Friday 5:00 PM – 6:00 PM",
+  "Saturday 11:00 AM – 12:00 PM",
+  "Saturday 2:00 PM – 3:00 PM",
 ];
 
 const OWNER_PHONE = "(470) 276-5026";
