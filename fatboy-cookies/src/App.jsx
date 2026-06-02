@@ -7,39 +7,15 @@ const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 // ── OneSignal App ID
 const ONESIGNAL_APP_ID = "70c46d73-b924-4926-ac83-f4e68de76d55";
 
-// ── EmailJS config
-const EJS_SERVICE  = "service_y8ncecw";
-const EJS_TEMPLATE = "template_n1orm1o";
-const EJS_PUBKEY   = "i4Y7t7o44F7l_1UQh";
-
-// ── Send email via EmailJS (sends from your own Gmail)
+// ── Send email via serverless function
 const sendEmail = async (type, order) => {
   try {
-    const isArrival = type === "arrival";
-    const subject = isArrival
-      ? `🚗 CUSTOMER ARRIVING — ${order.name} · ${order.order_num}`
-      : `🍪 NEW ORDER — ${order.name} · ${order.order_num}`;
-
-    const message = isArrival
-      ? `🚗 ${order.name} just tapped "I'm Here"!\n\nOrder: ${order.order_num}\nPhone: ${order.phone}\nPickup: ${order.pickup}\nFlavors: ${order.flavors}\n\n🍪 Bring their box to the door now!`
-      : `🍪 NEW ORDER RECEIVED!\n\nOrder #: ${order.order_num}\nName: ${order.name}\nPhone: ${order.phone}\n${order.email ? `Email: ${order.email}\n` : ""}Box Type: ${order.box_type}\nFlavors: ${order.flavors}\nQuantity: ${order.qty} box${order.qty > 1 ? "es" : ""} (${order.qty * 4} cookies)\nPickup: ${order.pickup}\n${order.note ? `Note: "${order.note}"\n` : ""}\nGo to your admin panel to mark ready when baked!`;
-
-    await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+    await fetch("/api/notify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        service_id: EJS_SERVICE,
-        template_id: EJS_TEMPLATE,
-        user_id: EJS_PUBKEY,
-        template_params: {
-          to_email: "1fatboycookies@gmail.com",
-          subject,
-          message,
-          from_name: "Fatboy Cookies Orders",
-        },
-      }),
+      body: JSON.stringify({ type, order }),
     });
-  } catch (e) { console.error("Email notification failed:", e); }
+  } catch (e) { console.error("Email failed:", e); }
 };
 
 // ── Sound engine using Web Audio API
