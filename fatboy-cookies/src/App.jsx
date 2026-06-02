@@ -28,22 +28,8 @@ window.emailjs.send(EJS_SERVICE, EJS_TEMPLATE, {
     const message = isArrival
       ? `🚗 ${order.name} just tapped "I'm Here"!\n\nOrder: ${order.order_num}\nPhone: ${order.phone}\nPickup: ${order.pickup}\nFlavors: ${order.flavors}\n\n🍪 Bring their box to the door now!`
       : `🍪 NEW ORDER RECEIVED!\n\nOrder #: ${order.order_num}\nName: ${order.name}\nPhone: ${order.phone}\n${order.email ? `Email: ${order.email}\n` : ""}Box Type: ${order.box_type}\nFlavors: ${order.flavors}\nQuantity: ${order.qty} box${order.qty > 1 ? "es" : ""} (${order.qty * 4} cookies)\nPickup: ${order.pickup}\n${order.note ? `Note: "${order.note}"\n` : ""}\nGo to your admin panel to mark ready when baked!`;
-
-    await fetch("https://api.emailjs.com/api/v1.0/email/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        service_id: EJS_SERVICE,
-        template_id: EJS_TEMPLATE,
-        user_id: EJS_PUBKEY,
-        template_params: {
-          to_email: "1fatboycookies@gmail.com",
-          subject,
-          message,
-          from_name: "Fatboy Cookies Orders",
-        },
-      }),
-    });
+await window.emailjs.send(EJS_SERVICE, EJS_TEMPLATE, { to_email: "1fatboycookies@gmail.com", subject, message, from_name: "Fatboy Cookies Orders" }, EJS_PUBKEY);
+    
   } catch (e) { console.error("Email notification failed:", e); }
 };
 
