@@ -10,7 +10,7 @@ const ONESIGNAL_APP_ID = "70c46d73-b924-4926-ac83-f4e68de76d55";
 // ── EmailJS config
 const EJS_SERVICE  = "service_y8ncecw";
 const EJS_TEMPLATE = "template_n1orm1o";
-const EJS_PUBKEY   = "LsFbHIcEIVjeb2rmvnqf1";
+const EJS_PUBKEY   = "i4Y7t7o44F7l_1UQh";
 
 // ── Send email via EmailJS (sends from your own Gmail)
 const sendEmail = async (type, order) => {
