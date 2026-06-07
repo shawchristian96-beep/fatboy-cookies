@@ -331,6 +331,12 @@ export default function App() {
   const css = `
     @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Permanent+Marker&family=Nunito:wght@400;600;700;800;900&display=swap');
     *{box-sizing:border-box;margin:0;padding:0;}
+    html{width:100%;overflow-x:hidden;}
+    body{width:100%;max-width:100vw;overflow-x:hidden;}
+    @media(max-width:520px){
+      .btn-red{font-size:18px;padding:14px 20px;}
+      input,textarea,select{font-size:16px!important;}
+    }
     .btn-red{background:#e63946;color:#fff;border:3px solid #f5f0e8;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;padding:16px 40px;border-radius:10px;cursor:pointer;box-shadow:4px 4px 0 #f4a261;transition:transform .1s,box-shadow .1s;width:100%;}
     .btn-red:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 #f4a261;}
     .btn-red:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #f4a261;}
