@@ -203,12 +203,22 @@ export default function App() {
     return () => clearInterval(pollInterval.current);
   }, []);
 
-  // Load inventory from localStorage (admin-only data)
+  // Load inventory from Supabase (synced across all devices)
   useEffect(() => {
-    const m = lsGet("fatboy-max") ? parseInt(lsGet("fatboy-max")) : 12;
-    const b = lsGet("fatboy-boxes") !== null ? parseInt(lsGet("fatboy-boxes")) : m;
-    const a = lsGet("fatboy-arrivals") ? JSON.parse(lsGet("fatboy-arrivals")) : [];
-    setMaxBoxes(m); setBoxesLeft(b); setAdminMax(m); setAdminBoxes(b); setArrivals(a);
+    (async () => {
+      try {
+        const data = await sb("settings?select=*");
+        const maxRow = data.find(r => r.key === "boxes_max");
+        const leftRow = data.find(r => r.key === "boxes_left");
+        const m = maxRow ? parseInt(maxRow.value) : 12;
+        const b = leftRow ? parseInt(leftRow.value) : m;
+        setMaxBoxes(m); setBoxesLeft(b); setAdminMax(m); setAdminBoxes(b);
+      } catch {
+        setMaxBoxes(12); setBoxesLeft(12); setAdminMax(12); setAdminBoxes(12);
+      }
+      const a = lsGet("fatboy-arrivals") ? JSON.parse(lsGet("fatboy-arrivals")) : [];
+      setArrivals(a);
+    })();
   }, []);
 
   // Load orders from Supabase
@@ -255,10 +265,12 @@ export default function App() {
         prefer: "return=minimal",
         body: JSON.stringify(newOrderData),
       });
-      // Update box count
+      // Update box count in Supabase
       const newBoxes = Math.max(0, boxesLeft - qty);
       setBoxesLeft(newBoxes); setAdminBoxes(newBoxes);
-      lsSet("fatboy-boxes", String(newBoxes));
+      try {
+        await sb("settings?key=eq.boxes_left", { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ value: String(newBoxes) }) });
+      } catch (e) { console.error(e); }
       setOrderNum(num);
       sendEmail("new_order", { ...newOrderData, order_num: num });
       setStep(5);
@@ -309,16 +321,22 @@ export default function App() {
     } catch { setLookupResult("notfound"); }
   };
 
-  const saveAdmin = () => {
+  const saveAdmin = async () => {
     const nb = Math.max(0, Math.min(adminBoxes, adminMax));
     setBoxesLeft(nb); setMaxBoxes(adminMax); setAdminBoxes(nb);
-    lsSet("fatboy-boxes", String(nb)); lsSet("fatboy-max", String(adminMax));
+    try {
+      await sb("settings?key=eq.boxes_left", { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ value: String(nb) }) });
+      await sb("settings?key=eq.boxes_max", { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ value: String(adminMax) }) });
+    } catch (e) { console.error(e); }
     setAdminSaved(true); setTimeout(() => setAdminSaved(false), 2200);
   };
 
-  const resetWeek = () => {
+  const resetWeek = async () => {
     setBoxesLeft(adminMax); setMaxBoxes(adminMax); setAdminBoxes(adminMax);
-    lsSet("fatboy-boxes", String(adminMax)); lsSet("fatboy-max", String(adminMax));
+    try {
+      await sb("settings?key=eq.boxes_left", { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ value: String(adminMax) }) });
+      await sb("settings?key=eq.boxes_max", { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ value: String(adminMax) }) });
+    } catch (e) { console.error(e); }
     setAdminSaved(true); setTimeout(() => setAdminSaved(false), 2200);
   };
 
